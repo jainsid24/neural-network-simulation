@@ -238,7 +238,7 @@ def draw_activation_effect(screen, neurons):
     for neuron in neurons:
         if neuron["probability"] > 0.5:
             # Determine the size of the circle based on the neuron's activation probability
-            size = int(neuron["probability"] * 10)
+            size = int(neuron["probability"] * 20)
 
             # Create a surface with a radial gradient
             circle_surface = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
@@ -247,7 +247,7 @@ def draw_activation_effect(screen, neurons):
             ]
             for i in range(size + 1):
                 pygame.draw.circle(
-                    circle_surface, (0, 0, 0, alpha_values[i]), (size, size), size - i
+                    circle_surface, (255, 255, 0, alpha_values[i]), (size, size), size - i
                 )
 
             # Draw the circle on the screen

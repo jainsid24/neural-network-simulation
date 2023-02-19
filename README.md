@@ -39,7 +39,7 @@ The following libraries are required to run this code:
 To run the code, execute the following command in the terminal:
 
 ```
-python neural_network.py
+python neuron.py
 ```
 
 This will start the Pygame window and run the simulation.
