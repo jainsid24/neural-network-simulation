@@ -17,8 +17,9 @@
 4. [Simulation Parameters](#simulation-parameters)
 5. [Code Structure](#code-structure)
 6. [Resources](#resources)
-7. [License](#license)
-8. [Want to Contribute?](#want-to-contribute)
+7. [Code Documentation](#documentation)
+8. [License](#license)
+9. [Want to Contribute?](#want-to-contribute)
 
 ## About
 
@@ -79,6 +80,10 @@ The code is structured into the following functions:
 - **draw_activation_effect**: Draws the activation effect on the screen.
 
 The `main` function contains the main loop of the game, which handles events, clears the screen, draws the connections, updates the network, and updates the screen.
+
+## Documentation
+
+- [API Reference](https://jainsid24.github.io/neural-network-simulation/)
 
 ## Resources
 
