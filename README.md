@@ -11,7 +11,7 @@
 This code simulates a simple neural network using Pygame library. The network consists of 25 neurons, each with a probability of being activated. The connection strengths between the neurons are randomly initialized, and they can be strengthened or weakened based on the activation patterns.
 
 
-![Animated GIF](https://media.giphy.com/media/YCZ3ncsZPhnFjPgQbH/giphy.gif)
+![Animated GIF](network.gif)
 
 ## Dependencies
 The following libraries are required to run this code:
