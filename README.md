@@ -10,7 +10,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black?style=flat-square)
 
 ## Contents
----
+
 1. [About](#about)
 2. [Dependencies](#dependencies)
 3. [Running the Code](#running-the-code)
@@ -20,26 +20,21 @@
 7. [License](#license)
 8. [Want to Contribute?](#want-to-contribute)
 
-
 ## About
----
 
 This code simulates a simple neural network using Pygame library. The network consists of 25 neurons (configurable), each with a probability of being activated. The connection strengths between the neurons are randomly initialized, and they can be strengthened or weakened based on the activation patterns.
 
 ![Animated GIF](network.gif)
 
 ## Dependencies
----
 
 The following libraries are required to run this code:
 
 * Pygame
 * Random
-
 * Sys
 
 ## Running the Code
----
 
 To run the code, execute the following command in the terminal:
 
@@ -50,7 +45,6 @@ python neural_network.py
 This will start the Pygame window and run the simulation.
 
 ## Simulation Parameters
----
 
 The following parameters can be adjusted in the code to change the behavior of the simulation:
 
@@ -65,7 +59,6 @@ The following parameters can be adjusted in the code to change the behavior of t
 - **PROBABILITY_DECREASE**: The value by which to decrease the neuron probabilities.
 
 ## Code Structure
----
 
 The code is structured into the following functions:
 
@@ -88,16 +81,15 @@ The code is structured into the following functions:
 The `main` function contains the main loop of the game, which handles events, clears the screen, draws the connections, updates the network, and updates the screen.
 
 ## Resources
----
+
 - [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
 - [The Brain from Top to Bottom](https://thebrain.mcgill.ca/flash/index_d.html)
 - [Neurons and Synapses](https://mind.ilstu.edu/curriculum/neurons_intro/neurons_intro.html)
+
 ## License
----
 
 This code is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
 ## Want to Contribute?
----
 
 Check out `CONTRIBUTING.md`.
