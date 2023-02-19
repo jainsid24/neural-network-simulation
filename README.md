@@ -83,7 +83,7 @@ The `main` function contains the main loop of the game, which handles events, cl
 
 ## Documentation
 
-- [API Reference](https://jainsid24.github.io/neural-network-simulation/)
+- [Code Documentation](https://jainsid24.github.io/neural-network-simulation/)
 
 ## Resources
 
