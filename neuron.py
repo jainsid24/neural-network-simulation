@@ -2,6 +2,17 @@ import pygame
 import sys
 import random
 
+# Define constants
+WINDOW_SIZE = (800, 600)
+NUM_NEURONS = 25
+INITIAL_PROBABILITY = 0.1
+MAX_CONNECTION_STRENGTH = 1.0
+MIN_CONNECTION_STRENGTH = 0.0
+CONNECTION_STRENGTH_DELTA = 0.1
+PROBABILITY_THRESHOLD = 0.5
+PROBABILITY_INCREASE = 0.1
+PROBABILITY_DECREASE = 0.05
+
 
 def update_probabilities(
     neurons, connections, threshold=0.5, increase=0.1, decrease=0.05
@@ -247,7 +258,10 @@ def draw_activation_effect(screen, neurons):
             ]
             for i in range(size + 1):
                 pygame.draw.circle(
-                    circle_surface, (255, 255, 0, alpha_values[i]), (size, size), size - i
+                    circle_surface,
+                    (255, 255, 0, alpha_values[i]),
+                    (size, size),
+                    size - i,
                 )
 
             # Draw the circle on the screen
@@ -295,29 +309,32 @@ def draw_sparks(
             vy *= -1
 
 
-if __name__ == "__main__":
-    # Define the size of the game window
-    WINDOW_SIZE = (800, 600)
+def draw_neurons(screen, neurons):
+    """
+    Draw circles to represent the neurons on the screen.
+    """
+    for neuron in neurons:
+        pygame.draw.circle(screen, (255, 255, 0), (neuron["x"], neuron["y"]), 3)
 
-    # Define the number of neurons in the network
-    NUM_NEURONS = 25
 
-    # Define the probability of each neuron being activated
-    INITIAL_PROBABILITY = 0.1
+def apply_complexities(neurons, connections):
+    """
+    Apply various complex effects to the network of neurons and connections.
+    """
+    mutate_connections(connections)
+    apply_external_input(neurons)
+    apply_feedback(neurons, connections)
+    apply_inhibition(neurons, connections)
+    apply_synaptic_plasticity(neurons, connections)
+    apply_learning(neurons, connections)
+    apply_modulatory_signals(neurons, connections)
+    apply_homeostasis(neurons)
+    apply_refractory_period(neurons)
+    apply_noise(neurons)
 
-    # Define the maximum and minimum values for the connection strengths
-    MAX_CONNECTION_STRENGTH = 1.0
-    MIN_CONNECTION_STRENGTH = 0.0
 
-    # Define the value by which to increase or decrease the connection strength
-    CONNECTION_STRENGTH_DELTA = 0.1
-
-    # Define the threshold, increase, and decrease values for updating the neuron probabilities
-    PROBABILITY_THRESHOLD = 0.5
-    PROBABILITY_INCREASE = 0.1
-    PROBABILITY_DECREASE = 0.05
-
-    # Initialize the network
+def initialize_network():
+    # Initialize neurons
     neurons = [
         {
             "x": random.randint(0, WINDOW_SIZE[0]),
@@ -327,6 +344,7 @@ if __name__ == "__main__":
         for _ in range(NUM_NEURONS)
     ]
 
+    # Initialize connections
     connections = [
         [
             random.uniform(MIN_CONNECTION_STRENGTH, MAX_CONNECTION_STRENGTH)
@@ -335,100 +353,92 @@ if __name__ == "__main__":
         for _ in range(NUM_NEURONS)
     ]
 
+    return neurons, connections
+
+
+def update_network(screen, neurons, connections):
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # Draw the background
+    screen.fill((255, 255, 255))
+    draw_background(screen, color1=(30, 30, 30), color2=(50, 50, 50), size=50)
+
+    # Draw the connections between neurons
+    draw_connections(screen, neurons, connections)
+
+    # Update the network
+    for i, activating_neuron in enumerate(neurons):
+        # Determine the target neuron based on connection strengths
+        target_neuron = random.choices(neurons, weights=connections[i])[0]
+
+        # Activate or inhibit the target neuron based on connection strength and probability
+        if (
+            random.uniform(0, 1)
+            < connections[i][neurons.index(target_neuron)]
+            * activating_neuron["probability"]
+        ):
+            color = (0, 0, 0)
+            delta = CONNECTION_STRENGTH_DELTA
+        elif (
+            random.uniform(0, 1)
+            < connections[neurons.index(target_neuron)][i]
+            * activating_neuron["probability"]
+        ):
+            color = (255, 0, 0)
+            delta = -CONNECTION_STRENGTH_DELTA
+        else:
+            continue
+
+        # Draw a line between the two neurons, using color based on connection strength
+        line_width = int(3 * connections[i][neurons.index(target_neuron)])
+        pygame.draw.line(
+            screen,
+            color,
+            (activating_neuron["x"], activating_neuron["y"]),
+            (target_neuron["x"], target_neuron["y"]),
+            line_width,
+        )
+
+        # Update the connection strength between the neurons
+        connections[i][neurons.index(target_neuron)] += delta
+
+    # Update neuron probabilities and apply complexities
+    update_probabilities(
+        neurons,
+        connections,
+        threshold=PROBABILITY_THRESHOLD,
+        increase=PROBABILITY_INCREASE,
+        decrease=PROBABILITY_DECREASE,
+    )
+    apply_complexities(neurons, connections)
+
+    # Draw the neurons and activation effect
+    draw_neurons(screen, neurons)
+    draw_activation_effect(screen, neurons)
+
+    # Draw some sparks
+    draw_sparks(screen)
+
+    # Update the screen
+    pygame.display.flip()
+
+
+def main():
     # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
 
+    # Initialize the network
+    neurons, connections = initialize_network()
+
     # Main loop of the game
     while True:
-        # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+        update_network(screen, neurons, connections)
 
-        # Clear the screen
-        screen.fill((255, 255, 255))
-        draw_background(screen, color1=(30, 30, 30), color2=(50, 50, 50), size=50)
 
-        # Draw the connections between neurons
-        draw_connections(screen, neurons, connections)
-
-        # Update the network
-        for i, activating_neuron in enumerate(neurons):
-            # Determine the target neuron based on connection strengths
-            target_neuron = random.choices(neurons, weights=connections[i])[0]
-
-            # Activate the target neuron with some probability based on connection strength
-            if (
-                random.uniform(0, 1)
-                < connections[i][neurons.index(target_neuron)]
-                * activating_neuron["probability"]
-            ):
-                # Draw a line between the two neurons, using color based on connection strength
-                line_width = int(3 * connections[i][neurons.index(target_neuron)])
-                pygame.draw.line(
-                    screen,
-                    (0, 0, 0),
-                    (activating_neuron["x"], activating_neuron["y"]),
-                    (target_neuron["x"], target_neuron["y"]),
-                    line_width,
-                )
-                # Update the connection strength between the neurons
-                connections[i][
-                    neurons.index(target_neuron)
-                ] += CONNECTION_STRENGTH_DELTA
-
-            else:
-                # Inhibit the target neuron with some probability based on connection strength
-                if (
-                    random.uniform(0, 1)
-                    < connections[neurons.index(target_neuron)][i]
-                    * activating_neuron["probability"]
-                ):
-                    # Draw a line between the two neurons, using color based on connection strength
-                    line_width = int(3 * connections[i][neurons.index(target_neuron)])
-                    pygame.draw.line(
-                        screen,
-                        (255, 0, 0),
-                        (activating_neuron["x"], activating_neuron["y"]),
-                        (target_neuron["x"], target_neuron["y"]),
-                        line_width,
-                    )
-                    # Update the connection strength between the neurons
-                    connections[neurons.index(target_neuron)][
-                        i
-                    ] -= CONNECTION_STRENGTH_DELTA
-
-        update_probabilities(
-            neurons,
-            connections,
-            threshold=PROBABILITY_THRESHOLD,
-            increase=PROBABILITY_INCREASE,
-            decrease=PROBABILITY_DECREASE,
-        )
-        # Apply complexities
-        mutate_connections(connections)
-        apply_external_input(neurons)
-        apply_feedback(neurons, connections)
-        apply_inhibition(neurons, connections)
-        apply_synaptic_plasticity(neurons, connections)
-        apply_learning(neurons, connections)
-        apply_modulatory_signals(neurons, connections)
-        apply_homeostasis(neurons)
-        apply_refractory_period(neurons)
-        apply_noise(neurons)
-
-        # Draw the neurons
-        [
-            pygame.draw.circle(screen, (255, 255, 0), (neuron["x"], neuron["y"]), 3)
-            for neuron in neurons
-        ]
-
-        # Draw the activation effect
-        draw_activation_effect(screen, neurons)
-
-        # Draw some sparks
-        draw_sparks(screen)
-        # Update the screen
-        pygame.display.flip()
+if __name__ == "__main__":
+    main()

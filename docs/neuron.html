@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>neuron.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>neuron.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pygame</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">random</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Define constants</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">WINDOW_SIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+<span class="n">NUM_NEURONS</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="n">INITIAL_PROBABILITY</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">MAX_CONNECTION_STRENGTH</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">MIN_CONNECTION_STRENGTH</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">CONNECTION_STRENGTH_DELTA</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">PROBABILITY_THRESHOLD</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">PROBABILITY_INCREASE</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">PROBABILITY_DECREASE</span> <span class="o">=</span> <span class="mf">0.05</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Update the probabilities of neurons being activated based on the activity of their neighbors.
+If the average activity level of a neuron&rsquo;s neighbors is above the threshold, its probability of
+being activated is increased by the increase amount. If it is below the threshold, its probability
+is decreased by the decrease amount.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">update_probabilities</span><span class="p">(</span>
+    <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">increase</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">decrease</span><span class="o">=</span><span class="mf">0.05</span>
+<span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Compute the activity level of each neuron</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">activity_levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">neurons</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">))]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">))</span>
+    <span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <p>Compute the average activity level of each neuron&rsquo;s neighbors</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">neighbor_activity_levels</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">activity_levels</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">))</span>
+    <span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Update the probabilities of each neuron being activated</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">neighbor_activity_levels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">increase</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">decrease</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <p>Ensure the probability stays within the valid range</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>Mutate the connection strengths between neurons.
+With probability mutation_rate, each connection is mutated by a factor of mutation_size.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">mutate_connections</span><span class="p">(</span><span class="n">connections</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">mutation_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">connections</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">connections</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">mutation_rate</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
+                    <span class="mi">1</span> <span class="o">-</span> <span class="n">mutation_size</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">mutation_size</span>
+                <span class="p">)</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>Apply external input to a random subset of neurons.
+Each neuron in the subset has its probability of being activated increased by strength,
+with probability rate.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_external_input</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">subset</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span> <span class="o">*</span> <span class="n">rate</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">:</span>
+        <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">strength</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Apply feedback to the network by updating the connection strengths between neurons.
+For each neuron in the network, its feedback weight is calculated as the sum of the
+connection strengths from all other neurons to that neuron, multiplied by the feedback_strength.
+The connection strengths are then updated by adding the feedback weight to each connection.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_feedback</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">,</span> <span class="n">feedback_strength</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+        <span class="n">feedback_weight</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">sum</span><span class="p">([</span><span class="n">connections</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">))</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">])</span>
+            <span class="o">*</span> <span class="n">feedback_strength</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">feedback_weight</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Apply global inhibition to the network by reducing the probabilities of all neurons.
+A random subset of neurons is chosen, with size proportional to inhibition_rate.
+The probabilities of these neurons are reduced by inhibition_strength.
+The connection strengths from these neurons to all other neurons are also reduced by a factor of 0.5.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_inhibition</span><span class="p">(</span>
+    <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">,</span> <span class="n">inhibition_strength</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">inhibition_rate</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">subset</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span> <span class="o">*</span> <span class="n">inhibition_rate</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">:</span>
+        <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">inhibition_strength</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">0.5</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">])</span>
+            <span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Apply synaptic plasticity to the network by updating the connection strengths between neurons.
+For each neuron in the network, a sliding window of the last <code>window</code> activations is computed.
+If the fraction of activations that were positive is above the <code>threshold</code>, the connection strengths
+from that neuron to all other neurons are increased by a factor of <code>factor</code>.
+If the fraction of activations that were negative is above the <code>threshold</code>, the connection strengths
+from that neuron to all other neurons are decreased by a factor of <code>factor</code>.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_synaptic_plasticity</span><span class="p">(</span>
+    <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+        <span class="n">window_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">window</span><span class="p">)</span>
+        <span class="n">window_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">),</span> <span class="n">i</span> <span class="o">+</span> <span class="n">window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">window_activities</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">neurons</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">window_start</span><span class="p">,</span> <span class="n">window_end</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">positive_fraction</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">window_activities</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">window_activities</span><span class="p">)</span>
+        <span class="n">negative_fraction</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">positive_fraction</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">positive_fraction</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">factor</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]))</span>
+            <span class="k">elif</span> <span class="n">negative_fraction</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">factor</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Apply Hebbian learning to the network by updating the connection strengths between neurons.
+For each pair of neurons that are activated together, the connection strength between them is
+increased by a factor of <code>learning_rate</code>. The connection strengths are clipped to the range [0, 1].</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_learning</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">i</span> <span class="o">!=</span> <span class="n">j</span>
+                <span class="ow">and</span> <span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
+                <span class="ow">and</span> <span class="n">neurons</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
+            <span class="p">):</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">learning_rate</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Apply modulatory signals to the network by updating the connection strengths between neurons.
+A random subset of neurons is chosen, with size proportional to modulatory_rate.
+For each neuron in the subset, the connection strengths from that neuron to all other neurons
+are increased or decreased by a random amount in the range [-modulatory_strength, modulatory_strength].</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_modulatory_signals</span><span class="p">(</span>
+    <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">,</span> <span class="n">modulatory_strength</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">modulatory_rate</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">subset</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span> <span class="o">*</span> <span class="n">modulatory_rate</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
+                <span class="o">-</span><span class="n">modulatory_strength</span><span class="p">,</span> <span class="n">modulatory_strength</span>
+            <span class="p">)</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">])</span>
+            <span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
+      </div>
+      <p>Apply homeostasis to the network by adjusting the probabilities of neurons based on their activity.
+For each neuron, its probability of activation is increased or decreased by a factor proportional
+to the difference between its current activity and the target activity. The adjustment factor is
+determined by the homeostasis rate parameter.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_homeostasis</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">target_prob</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">homeostasis_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-22'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">:</span>
+        <span class="n">delta_prob</span> <span class="o">=</span> <span class="p">(</span><span class="n">target_prob</span> <span class="o">-</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="n">homeostasis_rate</span>
+        <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">delta_prob</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      <p>Apply a refractory period to the network by temporarily decreasing the probability of activated neurons.
+For each neuron, if its probability of activation is above 0.5, it is considered activated, and its probability
+is set to 0.0 for the next <code>refractory_period</code> time steps.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_refractory_period</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">refractory_period</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;refractory&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">refractory_period</span>
+        <span class="k">elif</span> <span class="s2">&quot;refractory&quot;</span> <span class="ow">in</span> <span class="n">neuron</span> <span class="ow">and</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;refractory&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;refractory&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-25'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-25'>#</a>
+      </div>
+      <p>Apply noise to the network by randomly changing the probability of a subset of neurons.
+A random subset of neurons is chosen, with size proportional to noise_rate.
+For each neuron in the subset, its probability is increased or decreased by a random amount
+in the range [-noise_strength, noise_strength].</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_noise</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">noise_strength</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">noise_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-26'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-26'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">subset</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise_rate</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">:</span>
+        <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">noise_strength</span><span class="p">,</span> <span class="n">noise_strength</span><span class="p">)</span>
+        <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-27'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-27'>#</a>
+      </div>
+      <p>Draw a checkerboard pattern with a gradient as the background of the screen.
+The pattern alternates between two colors, and each square has size <code>size</code> pixels.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">draw_background</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">color1</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="n">color2</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-28'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-28'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_width</span><span class="p">(),</span> <span class="n">size</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_height</span><span class="p">(),</span> <span class="n">size</span><span class="p">):</span>
+            <span class="n">rect</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                <span class="n">color</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="n">color1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span> <span class="o">/</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_width</span><span class="p">())</span>
+                    <span class="o">+</span> <span class="n">color2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_width</span><span class="p">())</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">//</span> <span class="n">size</span> <span class="o">+</span> <span class="n">y</span> <span class="o">//</span> <span class="n">size</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">rect</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">rect</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">rect</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">color</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rect</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-29'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-29'>#</a>
+      </div>
+      <p>Draw a visual effect around activated neurons.
+For each neuron that is currently activated, draw a circle with a gradient effect that
+fades out towards the edge.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">draw_activation_effect</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-30'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-30'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-31'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-31'>#</a>
+      </div>
+      <p>Determine the size of the circle based on the neuron&rsquo;s activation probability</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-32'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-32'>#</a>
+      </div>
+      <p>Create a surface with a radial gradient</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">circle_surface</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">Surface</span><span class="p">((</span><span class="n">size</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">size</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span> <span class="n">pygame</span><span class="o">.</span><span class="n">SRCALPHA</span><span class="p">)</span>
+            <span class="n">alpha_values</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">min</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">/</span> <span class="n">size</span><span class="p">))</span> <span class="o">*</span> <span class="mi">255</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span>
+                    <span class="n">circle_surface</span><span class="p">,</span>
+                    <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alpha_values</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span>
+                    <span class="n">size</span> <span class="o">-</span> <span class="n">i</span><span class="p">,</span>
+                <span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-33'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-33'>#</a>
+      </div>
+      <p>Draw the circle on the screen</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>            <span class="n">screen</span><span class="o">.</span><span class="n">blit</span><span class="p">(</span><span class="n">circle_surface</span><span class="p">,</span> <span class="p">(</span><span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">size</span><span class="p">,</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">size</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-34'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-34'>#</a>
+      </div>
+      <p>Draw the connections between neurons on the screen.
+The color of the lines represents the strength of the connection.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">draw_connections</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-35'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-35'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">neurons</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">strength</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="n">strength</span><span class="p">,</span> <span class="n">strength</span><span class="p">,</span> <span class="n">strength</span><span class="p">)</span>
+                <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+                    <span class="n">screen</span><span class="p">,</span>
+                    <span class="n">color</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">neurons</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;y&quot;</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="n">neurons</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">neurons</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;y&quot;</span><span class="p">]),</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-36'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-36'>#</a>
+      </div>
+      <p>Draw random sparks on the screen with random trajectories and velocities.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">draw_sparks</span><span class="p">(</span>
+    <span class="n">screen</span><span class="p">,</span> <span class="n">spark_color</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">spark_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_sparks</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_speed</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-37'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-37'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_sparks</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_width</span><span class="p">())</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_height</span><span class="p">())</span>
+        <span class="n">vx</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">max_speed</span><span class="p">,</span> <span class="n">max_speed</span><span class="p">)</span>
+        <span class="n">vy</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">max_speed</span><span class="p">,</span> <span class="n">max_speed</span><span class="p">)</span>
+        <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">spark_color</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">spark_size</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-38'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-38'>#</a>
+      </div>
+      <p>Update the position of the spark based on its velocity</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">x</span> <span class="o">+=</span> <span class="n">vx</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="n">vy</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-39'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-39'>#</a>
+      </div>
+      <p>Bounce the spark off the edges of the screen</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_width</span><span class="p">():</span>
+            <span class="n">vx</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="n">screen</span><span class="o">.</span><span class="n">get_height</span><span class="p">():</span>
+            <span class="n">vy</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-40'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-40'>#</a>
+      </div>
+      <p>Draw circles to represent the neurons on the screen.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">draw_neurons</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-41'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-41'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">neuron</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">:</span>
+        <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">neuron</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-42'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-42'>#</a>
+      </div>
+      <p>Apply various complex effects to the network of neurons and connections.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">apply_complexities</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-43'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-43'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">mutate_connections</span><span class="p">(</span><span class="n">connections</span><span class="p">)</span>
+    <span class="n">apply_external_input</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span>
+    <span class="n">apply_feedback</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span>
+    <span class="n">apply_inhibition</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span>
+    <span class="n">apply_synaptic_plasticity</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span>
+    <span class="n">apply_learning</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span>
+    <span class="n">apply_modulatory_signals</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span>
+    <span class="n">apply_homeostasis</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span>
+    <span class="n">apply_refractory_period</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span>
+    <span class="n">apply_noise</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-44'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-44'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">initialize_network</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-45'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-45'>#</a>
+      </div>
+      <p>Initialize neurons</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">neurons</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">WINDOW_SIZE</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">WINDOW_SIZE</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="s2">&quot;probability&quot;</span><span class="p">:</span> <span class="n">INITIAL_PROBABILITY</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_NEURONS</span><span class="p">)</span>
+    <span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-46'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-46'>#</a>
+      </div>
+      <p>Initialize connections</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">connections</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">MIN_CONNECTION_STRENGTH</span><span class="p">,</span> <span class="n">MAX_CONNECTION_STRENGTH</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_NEURONS</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_NEURONS</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-47'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-47'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">update_network</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-48'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-48'>#</a>
+      </div>
+      <p>Handle events</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">pygame</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">QUIT</span><span class="p">:</span>
+            <span class="n">pygame</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-49'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-49'>#</a>
+      </div>
+      <p>Draw the background</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">screen</span><span class="o">.</span><span class="n">fill</span><span class="p">((</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">draw_background</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">color1</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="n">color2</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-50'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-50'>#</a>
+      </div>
+      <p>Draw the connections between neurons</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">draw_connections</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-51'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-51'>#</a>
+      </div>
+      <p>Update the network</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">activating_neuron</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">neurons</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-52'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-52'>#</a>
+      </div>
+      <p>Determine the target neuron based on connection strengths</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">target_neuron</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-53'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-53'>#</a>
+      </div>
+      <p>Activate or inhibit the target neuron based on connection strength and probability</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="o">&lt;</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">target_neuron</span><span class="p">)]</span>
+            <span class="o">*</span> <span class="n">activating_neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">CONNECTION_STRENGTH_DELTA</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="o">&lt;</span> <span class="n">connections</span><span class="p">[</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">target_neuron</span><span class="p">)][</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="n">activating_neuron</span><span class="p">[</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="o">-</span><span class="n">CONNECTION_STRENGTH_DELTA</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">continue</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-54'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-54'>#</a>
+      </div>
+      <p>Draw a line between the two neurons, using color based on connection strength</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">line_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">target_neuron</span><span class="p">)])</span>
+        <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+            <span class="n">screen</span><span class="p">,</span>
+            <span class="n">color</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">activating_neuron</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">activating_neuron</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="n">target_neuron</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">target_neuron</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]),</span>
+            <span class="n">line_width</span><span class="p">,</span>
+        <span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-55'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-55'>#</a>
+      </div>
+      <p>Update the connection strength between the neurons</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="n">connections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">neurons</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">target_neuron</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">delta</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-56'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-56'>#</a>
+      </div>
+      <p>Update neuron probabilities and apply complexities</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">update_probabilities</span><span class="p">(</span>
+        <span class="n">neurons</span><span class="p">,</span>
+        <span class="n">connections</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="n">PROBABILITY_THRESHOLD</span><span class="p">,</span>
+        <span class="n">increase</span><span class="o">=</span><span class="n">PROBABILITY_INCREASE</span><span class="p">,</span>
+        <span class="n">decrease</span><span class="o">=</span><span class="n">PROBABILITY_DECREASE</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">apply_complexities</span><span class="p">(</span><span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-57'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-57'>#</a>
+      </div>
+      <p>Draw the neurons and activation effect</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">draw_neurons</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">)</span>
+    <span class="n">draw_activation_effect</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-58'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-58'>#</a>
+      </div>
+      <p>Draw some sparks</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">draw_sparks</span><span class="p">(</span><span class="n">screen</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-59'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-59'>#</a>
+      </div>
+      <p>Update the screen</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">pygame</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">flip</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-60'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-60'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-61'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-61'>#</a>
+      </div>
+      <p>Initialize Pygame</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">pygame</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    <span class="n">screen</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">set_mode</span><span class="p">(</span><span class="n">WINDOW_SIZE</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-62'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-62'>#</a>
+      </div>
+      <p>Initialize the network</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span> <span class="o">=</span> <span class="n">initialize_network</span><span class="p">()</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-63'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-63'>#</a>
+      </div>
+      <p>Main loop of the game</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">update_network</span><span class="p">(</span><span class="n">screen</span><span class="p">,</span> <span class="n">neurons</span><span class="p">,</span> <span class="n">connections</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
